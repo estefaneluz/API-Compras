@@ -51,4 +51,18 @@ async function adicionarProduto(req, res){
     res.json("Produto não existe ou não tem estoque o suficiente")
 }
 
-module.exports = {listarProdutos, listarCarrinho, adicionarProduto}
+async function limparCarrinho(req, res){
+    const data = await lerArquivo()
+    data.carrinho = {
+        "produtos": [],
+        "subtotal": 0,
+        "dataDeEntrega": null,
+        "valorDoFrete": 0,
+        "totalAPagar": 0
+    }
+
+    await escreverNoArquivo(data)
+    res.json("A ação foi realizada com sucesso. O carrinho está vazio")
+}
+
+module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho}
