@@ -25,4 +25,9 @@ async function listarProdutos(req, res){
     res.json(produtosEstoque)
 }
 
-module.exports = {listarProdutos}
+async function listarCarrinho(req, res){
+    const {carrinho} = await lerArquivo()
+    res.json(carrinho)
+}
+
+module.exports = {listarProdutos, listarCarrinho}
