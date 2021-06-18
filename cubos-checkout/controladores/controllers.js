@@ -11,7 +11,17 @@ async function listarProdutos(req, res){
         produtosEstoque = produtosEstoque.filter
         (produto => produto.categoria.toLowerCase() === categoria.toLowerCase())
     }
-    
+
+    if(precoInicial){
+        produtosEstoque = produtosEstoque.filter
+        (produto => produto.preco >= precoInicial)
+    }
+
+    if(precoFinal){
+        produtosEstoque = produtosEstoque.filter
+        (produto => produto.preco <= precoFinal)
+    }
+
     res.json(produtosEstoque)
 }
 
