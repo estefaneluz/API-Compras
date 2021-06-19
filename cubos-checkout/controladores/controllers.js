@@ -39,13 +39,27 @@ async function adicionarProduto(req, res){
 
     if(produto){
         produtos[index].estoque -= quantidade
-        carrinho.produtos.push(produto)
         carrinho.subtotal+= produto.preco * quantidade
-        //falta adicionar a data
-        carrinho.valorDoFrete += carrinho.subtotal <= 20000 ? 5000 : 0
+        carrinho.dataDeEntrega = new Date()
+        carrinho.valorDoFrete = carrinho.subtotal <= 20000 ? 5000 : 0
         carrinho.totalAPagar = carrinho.valorDoFrete + carrinho.subtotal
+
+        let aux = false;
+        //se o produto já tiver no carrinho: 
+        carrinho.produtos.forEach(produto => {
+            if(produto.id === parseInt(id)){
+                produto.quantidade+=quantidade
+                aux = true;
+            }
+        });
+        //caso o produto não esteja: 
+        if(!aux){
+            const {idProduto, estoque, ...outros} = produto
+            carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
+        }
+
+        await escreverNoArquivo({produtos, carrinho})
         res.json(carrinho)
-        //atualizar no arquivo dps
         return;
     }
     res.json("Produto não existe ou não tem estoque o suficiente")
