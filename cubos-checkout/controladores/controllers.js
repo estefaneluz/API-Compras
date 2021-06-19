@@ -1,4 +1,3 @@
-const fs = require("fs/promises")
 const {lerArquivo, escreverNoArquivo} = require("../bibliotecaFS")
 
 async function listarProdutos(req, res){
@@ -30,6 +29,17 @@ async function listarCarrinho(req, res){
     res.json(carrinho)
 }
 
+async function acharProdutoCarrinho(carrinho, id, quantidade){
+    let aux; 
+    carrinho.produtos.forEach(produto => {
+        if(produto.id === parseInt(id)){
+            produto.quantidade+=quantidade
+            aux = true
+        }
+    });
+    if(!aux) return false
+}
+
 async function adicionarProduto(req, res){
     const {produtos, carrinho} = await lerArquivo()
     const {id, quantidade } = req.body
@@ -44,19 +54,13 @@ async function adicionarProduto(req, res){
         carrinho.valorDoFrete = carrinho.subtotal <= 20000 ? 5000 : 0
         carrinho.totalAPagar = carrinho.valorDoFrete + carrinho.subtotal
 
-        let aux = false;
         //se o produto já tiver no carrinho: 
-        carrinho.produtos.forEach(produto => {
-            if(produto.id === parseInt(id)){
-                produto.quantidade+=quantidade
-                aux = true;
-            }
-        });
+        const resultado = await acharProdutoCarrinho(carrinho, id, quantidade)
         //caso o produto não esteja: 
-        if(!aux){
+        if(resultado === false){
             const {idProduto, estoque, ...outros} = produto
             carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
-        }
+        } 
 
         await escreverNoArquivo({produtos, carrinho})
         res.json(carrinho)
