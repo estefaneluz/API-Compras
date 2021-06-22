@@ -1,5 +1,5 @@
 const {lerArquivo, escreverNoArquivo} = require("../utils/bibliotecaFS")
-const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf, limparCarrinho} = require("../utils/utils")
+const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf, limparCarrinho, validarUsuario} = require("../utils/utils")
 
 async function listarProdutos(req, res){
     const {produtos} = await lerArquivo()
@@ -110,8 +110,7 @@ async function rotaLimparCarrinho(req, res){
 async function finalizarCompra(req, res){
     let data = await lerArquivo()
     const {carrinho} = data;
-    const {type, country, name, documents} = req.body
-    const erros = []
+    
     if(data.carrinho.produtos.length===0){
         res.json("Não há produtos no carrinho")
         return;
@@ -136,31 +135,7 @@ async function finalizarCompra(req, res){
         return; 
     }
 
-    if(!type || !country || !name || !documents){
-        res.json("Está faltando dados do cliente. Precisa conter: type, country, name e documents (com type e number).")
-        return;
-    }
-
-    if(country.length<2){
-        erros.push("Precisa informar a sigla do país.")
-    }
-    if(type !== 'individual'){
-        erros.push("O tipo precisa ser igual a 'individual'.")
-    } 
-    if(!name.includes(" ")){
-        erros.push("Precisa informar o nome e sobrenome.")
-    }
-
-    const validarDocuments = documents.some(documento => {
-        return (
-            documento.hasOwnProperty("type") && documento.hasOwnProperty("number") &&
-            documento.type.toLowerCase() === "cpf" && documento.number.length === 11 && validarCpf(documento.number)
-        )
-    })
-
-    if(!validarDocuments){
-        erros.push("Precisa conter um cpf com 11 digitos apenas númericos.")
-    }
+    const erros = await validarUsuario(req.body);
 
     if(erros.length>0){
         res.json(erros)

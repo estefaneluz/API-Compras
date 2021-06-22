@@ -51,4 +51,37 @@ async function limparCarrinho(data){
     return data;
 }
 
-module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf, limparCarrinho}
+async function validarUsuario(userInfo){
+    const erros = []
+    const {type, country, name, documents} = userInfo; 
+
+    if(!type || !country || !name || !documents){
+        erros.push("Está faltando dados do cliente. Precisa conter: type, country, name e documents.")
+        return erros
+    }
+
+    if(country.length<2){
+        erros.push("Precisa informar a sigla do país.")
+    }
+    if(type !== 'individual'){
+        erros.push("O tipo precisa ser igual a 'individual'.")
+    } 
+    if(!name.includes(" ")){
+        erros.push("Precisa informar o nome e sobrenome.")
+    }
+
+    const validarDocuments = documents.some(documento => {
+        return (
+            documento.hasOwnProperty("type") && documento.hasOwnProperty("number") &&
+            documento.type.toLowerCase() === "cpf" && documento.number.length === 11 && validarCpf(documento.number)
+        )
+    })
+
+    if(!validarDocuments){
+        erros.push("Precisa conter um cpf com 11 digitos apenas númericos.")
+    }
+
+    return erros
+}
+
+module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf, limparCarrinho, validarUsuario}
