@@ -29,44 +29,84 @@ async function listarCarrinho(req, res){
     res.json(carrinho)
 }
 
+async function verificarEstoque(produtos, id, quantidade){
+    return produtos.find(produto => produto.id === parseInt(id) && produto.estoque >= quantidade)
+}
+
 async function acharProdutoCarrinho(carrinho, id, quantidade){
-    let aux; 
-    carrinho.produtos.forEach(produto => {
+    let aux = -1; 
+    carrinho.produtos.forEach((produto, i) => {
         if(produto.id === parseInt(id)){
             produto.quantidade+=quantidade
-            aux = true
+            aux = i
+            return;
         }
     });
-    if(!aux) return false
+    return aux
+}
+
+async function atualizarValoresCarrinho(data, produto, quantidade){
+    const {produtos, carrinho} = data 
+    const i = produtos.indexOf(produto)
+    produtos[i].estoque -= quantidade
+    carrinho.subtotal+= produto.preco * quantidade
+    carrinho.dataDeEntrega = carrinho.produtos.length !=0 ? new Date() : null
+    carrinho.valorDoFrete = (carrinho.subtotal <= 20000 && carrinho.produtos.length !=0 ) ? 5000 : 0
+    carrinho.totalAPagar = carrinho.valorDoFrete + carrinho.subtotal
+    return data
 }
 
 async function adicionarProduto(req, res){
-    const {produtos, carrinho} = await lerArquivo()
+    let data = await lerArquivo()
     const {id, quantidade } = req.body
 
-    const produto = produtos.find(produto => produto.id === parseInt(id) && produto.estoque >= quantidade)
-    const index = produtos.indexOf(produto)
+    const produto = await verificarEstoque(data.produtos, id, quantidade)
 
     if(produto){
-        produtos[index].estoque -= quantidade
-        carrinho.subtotal+= produto.preco * quantidade
-        carrinho.dataDeEntrega = new Date()
-        carrinho.valorDoFrete = carrinho.subtotal <= 20000 ? 5000 : 0
-        carrinho.totalAPagar = carrinho.valorDoFrete + carrinho.subtotal
-
         //se o produto já tiver no carrinho: 
-        const resultado = await acharProdutoCarrinho(carrinho, id, quantidade)
+        const resultado = await acharProdutoCarrinho(data.carrinho, id, quantidade)
         //caso o produto não esteja: 
-        if(resultado === false){
-            const {idProduto, estoque, ...outros} = produto
-            carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
+        if(resultado===-1){
+            const {id: idProduto, estoque, ...outros} = produto
+            data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
         } 
 
-        await escreverNoArquivo({produtos, carrinho})
-        res.json(carrinho)
+        data = await atualizarValoresCarrinho(data, produto, quantidade)
+        await escreverNoArquivo(data)
+        res.json(data.carrinho)
         return;
     }
     res.json("Produto não existe ou não tem estoque o suficiente")
+}
+
+async function alterarQtdProduto(req, res){
+    let data = await lerArquivo()
+    const {idProduto} = req.params
+    const {quantidade} = req.body
+
+    const index = await acharProdutoCarrinho(data.carrinho, idProduto, quantidade)
+    console.log(data.carrinho.produtos[index])
+    if(index===-1){
+        res.json("O produto informado não está no carrinho.")
+        return; 
+    }
+    const produto = await verificarEstoque(data.produtos, idProduto, quantidade)
+    if(!produto){
+        res.json("Não há estoque o suficiente do produto.")
+        return;
+    }
+
+    if(data.carrinho.produtos[index].quantidade < 0){
+        res.json("Você não pode remover mais itens do que possui no carrinho.")
+        return;
+    } else if (data.carrinho.produtos[index].quantidade === 0){
+        data.carrinho.produtos.splice(index, 1)
+    }
+
+    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    await escreverNoArquivo(data)
+    res.json(data.carrinho)
+    
 }
 
 async function limparCarrinho(req, res){
@@ -83,4 +123,4 @@ async function limparCarrinho(req, res){
     res.json("A ação foi realizada com sucesso. O carrinho está vazio")
 }
 
-module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho}
+module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto}
