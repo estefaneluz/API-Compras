@@ -67,14 +67,14 @@
       "id": 10,
       "nome": "Feijão Carioca Tipo 1 CAMIL Pacote 1kg",
       "preco": 799,
-      "estoque": 33,
+      "estoque": 32,
       "categoria": "Bazar"
     },
     {
       "id": 11,
       "nome": "Oléo de Canola QUALITÁ Pet 900ml",
       "preco": 1199,
-      "estoque": 15,
+      "estoque": 20,
       "categoria": "Oleo"
     },
     {
@@ -93,11 +93,18 @@
         "nome": "Oléo de Canola QUALITÁ Pet 900ml",
         "preco": 1199,
         "categoria": "Oleo"
+      },
+      {
+        "id": 10,
+        "quantidade": 1,
+        "nome": "Feijão Carioca Tipo 1 CAMIL Pacote 1kg",
+        "preco": 799,
+        "categoria": "Bazar"
       }
     ],
-    "subtotal": 2398,
-    "dataDeEntrega": "2021-06-22T03:00:06.989Z",
+    "subtotal": 3197,
+    "dataDeEntrega": "2021-06-22T04:54:29.228Z",
     "valorDoFrete": 5000,
-    "totalAPagar": 7398
+    "totalAPagar": 8197
   }
 }

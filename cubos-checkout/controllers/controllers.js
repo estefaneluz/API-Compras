@@ -1,5 +1,5 @@
 const {lerArquivo, escreverNoArquivo} = require("../utils/bibliotecaFS")
-const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho} = require("../utils/utils")
+const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque} = require("../utils/utils")
 
 async function listarProdutos(req, res){
     const {produtos} = await lerArquivo()
@@ -45,6 +45,7 @@ async function adicionarProduto(req, res){
             data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
         } 
 
+        data = await atualizarEstoque(data, id, quantidade)
         data = await atualizarValoresCarrinho(data, produto, quantidade)
         await escreverNoArquivo(data)
         res.json(data.carrinho)
@@ -77,10 +78,29 @@ async function alterarQtdProduto(req, res){
         data.carrinho.produtos.splice(index, 1)
     }
 
+    data = await atualizarEstoque(data, idProduto, quantidade)
     data = await atualizarValoresCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
     res.json(data.carrinho)
     
+}
+
+async function removerProdutoCarrinho(req, res){
+    let data = await lerArquivo()
+    const {produtos} = data.carrinho
+    const {idProduto} = req.params
+    const index = await acharProdutoCarrinho(data.carrinho, idProduto, 0)
+    if(index===-1){
+        res.json("O produto informado não está no carrinho.")
+        return; 
+    }
+    const produto = produtos[index]
+    const quantidade = produto.quantidade * (-1)
+    produtos.splice(index, 1)
+    data = await atualizarEstoque(data, idProduto, quantidade)
+    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    await escreverNoArquivo(data)
+    res.json(data.carrinho)
 }
 
 async function limparCarrinho(req, res){
@@ -97,4 +117,4 @@ async function limparCarrinho(req, res){
     res.json("A ação foi realizada com sucesso. O carrinho está vazio")
 }
 
-module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto}
+module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto, removerProdutoCarrinho}
