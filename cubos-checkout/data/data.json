@@ -74,7 +74,7 @@
       "id": 11,
       "nome": "Oléo de Canola QUALITÁ Pet 900ml",
       "preco": 1199,
-      "estoque": 20,
+      "estoque": 2,
       "categoria": "Oleo"
     },
     {
@@ -110,7 +110,7 @@
       }
     ],
     "subtotal": 5946,
-    "dataDeEntrega": "2021-06-22T18:09:05.054Z",
+    "dataDeEntrega": "2021-06-22T21:53:40.086Z",
     "valorDoFrete": 5000,
     "totalAPagar": 10946
   }

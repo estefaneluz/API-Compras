@@ -45,7 +45,6 @@ async function adicionarProduto(req, res){
             data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
         } 
 
-        data = await atualizarEstoque(data, id, quantidade)
         data = await atualizarValoresCarrinho(data, produto, quantidade)
         await escreverNoArquivo(data)
         res.json(data.carrinho)
@@ -77,7 +76,6 @@ async function alterarQtdProduto(req, res){
         data.carrinho.produtos.splice(index, 1)
     }
 
-    data = await atualizarEstoque(data, idProduto, quantidade)
     data = await atualizarValoresCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
     res.json(data.carrinho)
@@ -96,7 +94,6 @@ async function removerProdutoCarrinho(req, res){
     const produto = produtos[index]
     const quantidade = produto.quantidade * (-1)
     produtos.splice(index, 1)
-    data = await atualizarEstoque(data, idProduto, quantidade)
     data = await atualizarValoresCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
     res.json(data.carrinho)
@@ -118,6 +115,7 @@ async function limparCarrinho(req, res){
 
 async function finalizarCompra(req, res){
     const data = await lerArquivo()
+    const {carrinho} = data;
     const {type, country, name, documents} = req.body
     const erros = []
     if(data.carrinho.produtos.length===0){
@@ -125,7 +123,24 @@ async function finalizarCompra(req, res){
         return;
     }
 
-    //verificar estoque 
+    const semEstoque = []
+    await carrinho.produtos.forEach(produto => {
+        const resposta = verificarEstoque(data.produtos, produto.id, produto.quantidade).then((resposta) => {
+            if(!resposta){
+                semEstoque.push({
+                    id: produto.id,
+                    nome: produto.nome
+                })
+            }
+        })
+    })
+
+    if(semEstoque.length){
+        res.json({
+            "mensagem": "Não há estoque o suficiente dos seguintes produtos: ", 
+            "produtos": estoque})
+        return; 
+    }
 
     if(!type || !country || !name || !documents){
         res.json("Está faltando dados do cliente. Precisa conter: type, country, name e documents (com type e number).")
@@ -144,7 +159,7 @@ async function finalizarCompra(req, res){
 
     const validarDocuments = documents.some(documento => {
         return (
-            documento.hasOwnProperty(type) && documento.hasOwnProperty(number) &&
+            documento.hasOwnProperty("type") && documento.hasOwnProperty("number") &&
             documento.type.toLowerCase() === "cpf" && documento.number.length === 11 && validarCpf(documento.number)
         )
     })
@@ -157,6 +172,11 @@ async function finalizarCompra(req, res){
         res.json(erros)
         return;
     }
+
+    res.json("deu certo")
+    //abater no estoque
+    //retornar msg 
+    //limpar o carrinho 
 }
 
 module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}

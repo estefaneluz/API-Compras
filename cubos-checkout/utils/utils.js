@@ -34,7 +34,7 @@ async function atualizarValoresCarrinho(data, produto, quantidade){
 }
 
 async function validarCpf(cpf){
-    cpf.split("")
+    cpf = cpf.split("")
     return cpf.every(char => {
         return !isNaN(char)
     })
