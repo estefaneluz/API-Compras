@@ -40,4 +40,15 @@ async function validarCpf(cpf){
     })
 }
 
-module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf}
+async function limparCarrinho(data){
+    data.carrinho = {
+        "produtos": [],
+        "subtotal": 0,
+        "dataDeEntrega": null,
+        "valorDoFrete": 0,
+        "totalAPagar": 0
+    }
+    return data;
+}
+
+module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf, limparCarrinho}

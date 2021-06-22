@@ -1,5 +1,5 @@
 const {lerArquivo, escreverNoArquivo} = require("../utils/bibliotecaFS")
-const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf} = require("../utils/utils")
+const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf, limparCarrinho} = require("../utils/utils")
 
 async function listarProdutos(req, res){
     const {produtos} = await lerArquivo()
@@ -99,15 +99,9 @@ async function removerProdutoCarrinho(req, res){
     res.json(data.carrinho)
 }
 
-async function limparCarrinho(req, res){
-    const data = await lerArquivo()
-    data.carrinho = {
-        "produtos": [],
-        "subtotal": 0,
-        "dataDeEntrega": null,
-        "valorDoFrete": 0,
-        "totalAPagar": 0
-    }
+async function rotaLimparCarrinho(req, res){
+    let data = await lerArquivo()
+    data = await limparCarrinho(data)
 
     await escreverNoArquivo(data)
     res.json("A ação foi realizada com sucesso. O carrinho está vazio")
@@ -180,15 +174,9 @@ async function finalizarCompra(req, res){
         "Mensagem": "Compra efetuada com sucesso!",
         carrinho})
 
-    //limpar o carrinho 
-    data.carrinho = {
-        "produtos": [],
-        "subtotal": 0,
-        "dataDeEntrega": null,
-        "valorDoFrete": 0,
-        "totalAPagar": 0
-    }
+    data = await limparCarrinho(data)
+
     await escreverNoArquivo(data)
 }
 
-module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}
+module.exports = {listarProdutos, listarCarrinho, adicionarProduto, rotaLimparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}
