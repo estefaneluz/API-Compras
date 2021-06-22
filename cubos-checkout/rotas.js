@@ -1,6 +1,6 @@
 const express = require("express")
 const rotas = express()
-const {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto} = require("./controladores/controllers")
+const {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto} = require("./controllers/controllers")
 
 rotas.get("/produtos", listarProdutos)
 rotas.get("/carrinho", listarCarrinho)
