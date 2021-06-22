@@ -33,4 +33,11 @@ async function atualizarValoresCarrinho(data, produto, quantidade){
     return data
 }
 
-module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho}
+async function validarCpf(cpf){
+    cpf.split("")
+    return cpf.every(char => {
+        return !isNaN(char)
+    })
+}
+
+module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf}

@@ -60,7 +60,7 @@
       "id": 9,
       "nome": "Arroz Parboilizado Tipo 1 CAMIL Pacote 5kg",
       "preco": 2749,
-      "estoque": 9,
+      "estoque": 8,
       "categoria": "Bazar"
     },
     {
@@ -100,11 +100,18 @@
         "nome": "Feijão Carioca Tipo 1 CAMIL Pacote 1kg",
         "preco": 799,
         "categoria": "Bazar"
+      },
+      {
+        "id": 9,
+        "quantidade": 1,
+        "nome": "Arroz Parboilizado Tipo 1 CAMIL Pacote 5kg",
+        "preco": 2749,
+        "categoria": "Bazar"
       }
     ],
-    "subtotal": 3197,
-    "dataDeEntrega": "2021-06-22T04:54:29.228Z",
+    "subtotal": 5946,
+    "dataDeEntrega": "2021-06-22T18:09:05.054Z",
     "valorDoFrete": 5000,
-    "totalAPagar": 8197
+    "totalAPagar": 10946
   }
 }
