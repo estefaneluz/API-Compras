@@ -114,7 +114,7 @@ async function limparCarrinho(req, res){
 }
 
 async function finalizarCompra(req, res){
-    const data = await lerArquivo()
+    let data = await lerArquivo()
     const {carrinho} = data;
     const {type, country, name, documents} = req.body
     const erros = []
@@ -125,7 +125,7 @@ async function finalizarCompra(req, res){
 
     const semEstoque = []
     await carrinho.produtos.forEach(produto => {
-        const resposta = verificarEstoque(data.produtos, produto.id, produto.quantidade).then((resposta) => {
+        verificarEstoque(data.produtos, produto.id, produto.quantidade).then(resposta => {
             if(!resposta){
                 semEstoque.push({
                     id: produto.id,
@@ -138,7 +138,7 @@ async function finalizarCompra(req, res){
     if(semEstoque.length){
         res.json({
             "mensagem": "Não há estoque o suficiente dos seguintes produtos: ", 
-            "produtos": estoque})
+            "produtos": semEstoque})
         return; 
     }
 
@@ -173,10 +173,22 @@ async function finalizarCompra(req, res){
         return;
     }
 
-    res.json("deu certo")
-    //abater no estoque
-    //retornar msg 
+    await carrinho.produtos.forEach(produto => {
+        atualizarEstoque(data, produto.id, produto.quantidade).then(resposta => data = resposta )
+    })
+    res.json({
+        "Mensagem": "Compra efetuada com sucesso!",
+        carrinho})
+
     //limpar o carrinho 
+    data.carrinho = {
+        "produtos": [],
+        "subtotal": 0,
+        "dataDeEntrega": null,
+        "valorDoFrete": 0,
+        "totalAPagar": 0
+    }
+    await escreverNoArquivo(data)
 }
 
 module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}
