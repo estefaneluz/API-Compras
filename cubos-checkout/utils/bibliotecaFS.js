@@ -2,8 +2,8 @@ const fs = require('fs');
 
 const fsp = fs.promises;
 
-const ARQUIVO = 'banco/data.json';
-const CAMINHO_BANCO = 'banco';
+const ARQUIVO = 'data/data.json';
+const CAMINHO_BANCO = 'data';
 
 const lerArquivo = async () => {
     try {

@@ -60,21 +60,21 @@
       "id": 9,
       "nome": "Arroz Parboilizado Tipo 1 CAMIL Pacote 5kg",
       "preco": 2749,
-      "estoque": 9,
+      "estoque": 8,
       "categoria": "Bazar"
     },
     {
       "id": 10,
       "nome": "Feijão Carioca Tipo 1 CAMIL Pacote 1kg",
       "preco": 799,
-      "estoque": 33,
+      "estoque": 32,
       "categoria": "Bazar"
     },
     {
       "id": 11,
       "nome": "Oléo de Canola QUALITÁ Pet 900ml",
       "preco": 1199,
-      "estoque": 22,
+      "estoque": 20,
       "categoria": "Oleo"
     },
     {
@@ -86,10 +86,32 @@
     }
   ],
   "carrinho": {
-    "produtos": [],
-    "subtotal": 0,
-    "dataDeEntrega": null,
-    "valorDoFrete": 0,
-    "totalAPagar": 0
+    "produtos": [
+      {
+        "id": 11,
+        "quantidade": 2,
+        "nome": "Oléo de Canola QUALITÁ Pet 900ml",
+        "preco": 1199,
+        "categoria": "Oleo"
+      },
+      {
+        "id": 10,
+        "quantidade": 1,
+        "nome": "Feijão Carioca Tipo 1 CAMIL Pacote 1kg",
+        "preco": 799,
+        "categoria": "Bazar"
+      },
+      {
+        "id": 9,
+        "quantidade": 1,
+        "nome": "Arroz Parboilizado Tipo 1 CAMIL Pacote 5kg",
+        "preco": 2749,
+        "categoria": "Bazar"
+      }
+    ],
+    "subtotal": 5946,
+    "dataDeEntrega": "2021-06-22T18:09:05.054Z",
+    "valorDoFrete": 5000,
+    "totalAPagar": 10946
   }
 }
