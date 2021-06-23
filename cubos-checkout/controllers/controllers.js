@@ -1,7 +1,7 @@
 const { lerArquivo, escreverNoArquivo } = require("../utils/bibliotecaFS");
-const instanciaAxios = require('../services/pagarme')
-const fs = require('fs/promises');
-const {add} = require("date-fns");
+const instanciaAxios = require("../services/pagarme");
+const fs = require("fs/promises");
+const { add } = require("date-fns");
 const {
   verificarEstoque,
   acharProdutoCarrinho,
@@ -10,7 +10,7 @@ const {
   limparCarrinho,
   validarUsuario,
   formatarCarrinho,
-  formatarPedido
+  formatarPedido,
 } = require("../utils/utils");
 
 async function listarProdutos(req, res) {
@@ -18,7 +18,7 @@ async function listarProdutos(req, res) {
   const { categoria, precoInicial, precoFinal } = req.query;
 
   let produtosEstoque = produtos.filter((produto) => produto.estoque > 0);
-  //tirar esses if, ver se sem eles funciona 
+  //tirar esses if, ver se sem eles funciona
   if (categoria) {
     produtosEstoque = produtosEstoque.filter(
       (produto) => produto.categoria.toLowerCase() === categoria.toLowerCase()
@@ -42,7 +42,8 @@ async function listarProdutos(req, res) {
 
 async function listarCarrinho(req, res) {
   const { carrinho } = await lerArquivo();
-  res.status(200).json(carrinho);
+  const carrinhoFormatado = await formatarCarrinho(carrinho);
+  res.status(200).json(carrinhoFormatado);
 }
 
 async function adicionarProduto(req, res) {
@@ -67,7 +68,9 @@ async function adicionarProduto(req, res) {
 
   data = await atualizarCarrinho(data, produto, quantidade);
   await escreverNoArquivo(data);
-  res.status(201).json(data.carrinho);
+
+  const carrinhoFormatado = await formatarCarrinho(data.carrinho);
+  res.status(201).json(carrinhoFormatado);
 }
 
 async function alterarQtdProduto(req, res) {
@@ -95,11 +98,9 @@ async function alterarQtdProduto(req, res) {
   }
 
   if (data.carrinho.produtos[index].quantidade < 0) {
-    res
-      .status(400)
-      .json({
-        mensagem: "Você não pode remover mais itens do que possui no carrinho.",
-      });
+    res.status(400).json({
+      mensagem: "Você não pode remover mais itens do que possui no carrinho.",
+    });
     return;
   } else if (data.carrinho.produtos[index].quantidade === 0) {
     data.carrinho.produtos.splice(index, 1);
@@ -107,7 +108,9 @@ async function alterarQtdProduto(req, res) {
 
   data = await atualizarCarrinho(data, produto, quantidade);
   await escreverNoArquivo(data);
-  res.status(200).json(data.carrinho);
+
+  const carrinhoFormatado = await formatarCarrinho(data.carrinho);
+  res.status(200).json(carrinhoFormatado);
 }
 
 async function removerProdutoCarrinho(req, res) {
@@ -126,7 +129,9 @@ async function removerProdutoCarrinho(req, res) {
   produtos.splice(index, 1);
   data = await atualizarCarrinho(data, produto, quantidade);
   await escreverNoArquivo(data);
-  res.status(200).json(data.carrinho);
+
+  const carrinhoFormatado = await formatarCarrinho(data.carrinho);
+  res.status(200).json(carrinhoFormatado);
 }
 
 async function rotaLimparCarrinho(req, res) {
@@ -134,15 +139,13 @@ async function rotaLimparCarrinho(req, res) {
   data = await limparCarrinho(data);
 
   await escreverNoArquivo(data);
-  res
-    .status(200)
-    .json({
-      mensagem: "A ação foi realizada com sucesso. O carrinho está vazio.",
-    });
+  res.status(200).json({
+    mensagem: "A ação foi realizada com sucesso. O carrinho está vazio.",
+  });
 }
 
 async function finalizarCompra(req, res) {
-  const pedidos = await fs.readFile('./data/pedidos.json')
+  const pedidos = await fs.readFile("./data/pedidos.json");
   let data = await lerArquivo();
   const { carrinho } = data;
 
@@ -190,55 +193,53 @@ async function finalizarCompra(req, res) {
       );
     });
     const dataBoleto = add(new Date(), {
-      days: 3
-    })
+      days: 3,
+    });
 
-    const pedido = await instanciaAxios.post('transactions', {
-      "customer": req.body,
-      "amount": carrinho.totalAPagar,
-	    "payment_method": "boleto", 
-      "boleto_expiration_date": dataBoleto
-    }) 
+    const pedido = await instanciaAxios.post("transactions", {
+      customer: req.body,
+      amount: carrinho.totalAPagar,
+      payment_method: "boleto",
+      boleto_expiration_date: dataBoleto,
+    });
 
-    const boleto = pedido.data
+    const boleto = pedido.data;
 
-    Object.keys(boleto).forEach(prop => {
-      if(boleto[prop]===null){
-        delete boleto[prop]
+    Object.keys(boleto).forEach((prop) => {
+      if (boleto[prop] === null) {
+        delete boleto[prop];
       }
-     });
+    });
 
-    const carrinhoFormatado = await formatarCarrinho(carrinho); 
-    const pedidoFormatado = await formatarPedido(boleto)
+    const carrinhoFormatado = await formatarCarrinho(carrinho);
+    const pedidoFormatado = await formatarPedido(boleto);
 
-    const jsonPedidos = JSON.parse(pedidos)
+    const jsonPedidos = JSON.parse(pedidos);
     jsonPedidos.push({
       carrinho: carrinhoFormatado,
-      boleto: pedidoFormatado
-    })
+      boleto: pedidoFormatado,
+    });
 
     res.status(200).json({
       mensagem: "Compra efetuada com sucesso!",
       carrinho: carrinhoFormatado,
-      boleto: boleto
+      boleto: boleto,
     });
 
-    fs.writeFile('./data/pedidos.json', JSON.stringify(jsonPedidos))
+    fs.writeFile("./data/pedidos.json", JSON.stringify(jsonPedidos));
     data = await limparCarrinho(data);
     await escreverNoArquivo(data);
-  } 
-  catch (error){ //testar erros, apagar o amount do body, colocar a api key errada, etc
-    if(!error.response){
-      res.status(500).json({"error": error})
+  } catch (error) {
+    if (!error.response) {
+      res.status(500).json({ error: error });
       return;
     }
-    const {
-      data,
-      status,
-    } = error.response
+    const { data, status } = error.response;
     res
       .status(status)
-      .json({ erro: `${data.errors[0].parameter_name} - ${data.errors[0].message}` })
+      .json({
+        erro: `${data.errors[0].parameter_name} - ${data.errors[0].message}`,
+      });
   }
 }
 
