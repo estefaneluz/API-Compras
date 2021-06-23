@@ -22,7 +22,7 @@ async function atualizarEstoque(data, id, quantidade){
     return data
 }
 
-async function atualizarValoresCarrinho(data, produto, quantidade){
+async function atualizarCarrinho(data, produto, quantidade){
     const {carrinho} = data 
     // const i = produtos.indexOf(produto)
     // produtos[i].estoque -= quantidade
@@ -84,4 +84,4 @@ async function validarUsuario(userInfo){
     return erros
 }
 
-module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarValoresCarrinho, validarCpf, limparCarrinho, validarUsuario}
+module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarCarrinho, validarCpf, limparCarrinho, validarUsuario}

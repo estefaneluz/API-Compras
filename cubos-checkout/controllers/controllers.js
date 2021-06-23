@@ -1,5 +1,5 @@
 const {lerArquivo, escreverNoArquivo} = require("../utils/bibliotecaFS")
-const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf, limparCarrinho, validarUsuario} = require("../utils/utils")
+const {verificarEstoque, acharProdutoCarrinho, atualizarCarrinho, atualizarEstoque, validarCpf, limparCarrinho, validarUsuario} = require("../utils/utils")
 
 async function listarProdutos(req, res){
     const {produtos} = await lerArquivo()
@@ -45,7 +45,7 @@ async function adicionarProduto(req, res){
             data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
         } 
 
-        data = await atualizarValoresCarrinho(data, produto, quantidade)
+        data = await atualizarCarrinho(data, produto, quantidade)
         await escreverNoArquivo(data)
         res.json(data.carrinho)
         return;
@@ -76,7 +76,7 @@ async function alterarQtdProduto(req, res){
         data.carrinho.produtos.splice(index, 1)
     }
 
-    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    data = await atualizarCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
     res.json(data.carrinho)
     
@@ -94,7 +94,7 @@ async function removerProdutoCarrinho(req, res){
     const produto = produtos[index]
     const quantidade = produto.quantidade * (-1)
     produtos.splice(index, 1)
-    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    data = await atualizarCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
     res.json(data.carrinho)
 }
