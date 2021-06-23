@@ -36,7 +36,7 @@ async function adicionarProduto(req, res){
 
     const produto = await verificarEstoque(data.produtos, id, quantidade)
 
-    if(!produto){ //separar as mensagens
+    if(!produto){
         res.status(404).json({"mensagem": "Produto não existe ou não tem estoque o suficiente"})
         return;
     }
