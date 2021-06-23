@@ -1,4 +1,6 @@
 const { lerArquivo, escreverNoArquivo } = require("../utils/bibliotecaFS");
+const instanciaAxios = require('../services/pagarme')
+const {add} = require("date-fns");
 const {
   verificarEstoque,
   acharProdutoCarrinho,
@@ -177,19 +179,48 @@ async function finalizarCompra(req, res) {
     return;
   }
 
-  await carrinho.produtos.forEach((produto) => {
-    atualizarEstoque(data, produto.id, produto.quantidade).then(
-      (resposta) => (data = resposta)
-    );
-  });
-  res.status(200).json({
-    mensagem: "Compra efetuada com sucesso!",
-    carrinho,
-  });
+  try {
+    await carrinho.produtos.forEach((produto) => {
+      atualizarEstoque(data, produto.id, produto.quantidade).then(
+        (resposta) => (data = resposta)
+      );
+    });
+    const dataBoleto = add(new Date(), {
+      days: 3
+    })
 
-  data = await limparCarrinho(data);
+    const pedido = await instanciaAxios.post('transactions', {
+      "customer": req.body,
+      "amount": carrinho.totalAPagar,
+	    "payment_method": "boleto", 
+      "boleto_expiration_date": dataBoleto
+    }) 
 
-  await escreverNoArquivo(data);
+    const boleto = pedido.data
+
+    Object.keys(boleto).forEach(prop => {
+      if(boleto[prop]===null){
+        delete boleto[prop]
+      }
+     });
+
+    res.status(200).json({
+      mensagem: "Compra efetuada com sucesso!",
+      carrinho,
+      boleto: boleto
+    });
+
+    data = await limparCarrinho(data);
+    await escreverNoArquivo(data);
+  } catch (error){
+    const {
+      data: { errors },
+      status,
+    } = error.response
+    res
+      .status(status)
+      .json({ erro: `${errors[0].parameter_name} - ${errors[0].message}` })
+  }
 }
 
 module.exports = {
