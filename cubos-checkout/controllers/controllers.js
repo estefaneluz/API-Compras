@@ -1,5 +1,5 @@
 const {lerArquivo, escreverNoArquivo} = require("../utils/bibliotecaFS")
-const {verificarEstoque, acharProdutoCarrinho, atualizarValoresCarrinho, atualizarEstoque, validarCpf} = require("../utils/utils")
+const {verificarEstoque, acharProdutoCarrinho, atualizarCarrinho, atualizarEstoque, limparCarrinho, validarUsuario} = require("../utils/utils")
 
 async function listarProdutos(req, res){
     const {produtos} = await lerArquivo()
@@ -22,12 +22,12 @@ async function listarProdutos(req, res){
         (produto => produto.preco <= precoFinal)
     }
 
-    res.json(produtosEstoque)
+    res.status(200).json(produtosEstoque)
 }
 
 async function listarCarrinho(req, res){
     const {carrinho} = await lerArquivo()
-    res.json(carrinho)
+    res.status(200).json(carrinho)
 }
 
 async function adicionarProduto(req, res){
@@ -36,22 +36,21 @@ async function adicionarProduto(req, res){
 
     const produto = await verificarEstoque(data.produtos, id, quantidade)
 
-    if(produto){
-        //se o produto já tiver no carrinho: 
-        const resultado = await acharProdutoCarrinho(data.carrinho, id, quantidade)
-        //caso o produto não esteja: 
-        if(resultado===-1){
-            const {id: idProduto, estoque, ...outros} = produto
-            data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
-        } 
-
-        data = await atualizarEstoque(data, id, quantidade)
-        data = await atualizarValoresCarrinho(data, produto, quantidade)
-        await escreverNoArquivo(data)
-        res.json(data.carrinho)
+    if(!produto){
+        res.status(404).json({"mensagem": "Produto não existe ou não tem estoque o suficiente"})
         return;
     }
-    res.json("Produto não existe ou não tem estoque o suficiente")
+    //se o produto já tiver no carrinho: 
+    const resultado = await acharProdutoCarrinho(data.carrinho, id, quantidade)
+    //caso o produto não esteja: 
+    if(resultado===-1){
+        const {id: idProduto, estoque, ...outros} = produto
+        data.carrinho.produtos.push({"id": idProduto, quantidade, ...outros})
+    } 
+
+    data = await atualizarCarrinho(data, produto, quantidade)
+    await escreverNoArquivo(data)
+    res.status(201).json(data.carrinho)
 }
 
 async function alterarQtdProduto(req, res){
@@ -61,26 +60,25 @@ async function alterarQtdProduto(req, res){
 
     const index = await acharProdutoCarrinho(data.carrinho, idProduto, quantidade)
     if(index===-1){
-        res.json("O produto informado não está no carrinho.")
+        res.status(404).json({"mensagem":"O produto informado não está no carrinho."})
         return; 
     }
     const produto = await verificarEstoque(data.produtos, idProduto, quantidade)
     if(!produto){
-        res.json("Não há estoque o suficiente do produto.")
+        res.status(404).json({"mensagem":"Não há estoque o suficiente do produto."})
         return;
     }
 
     if(data.carrinho.produtos[index].quantidade < 0){
-        res.json("Você não pode remover mais itens do que possui no carrinho.")
+        res.status(400).json({"mensagem":"Você não pode remover mais itens do que possui no carrinho."})
         return;
     } else if (data.carrinho.produtos[index].quantidade === 0){
         data.carrinho.produtos.splice(index, 1)
     }
 
-    data = await atualizarEstoque(data, idProduto, quantidade)
-    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    data = await atualizarCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
-    res.json(data.carrinho)
+    res.status(200).json(data.carrinho)
     
 }
 
@@ -90,73 +88,72 @@ async function removerProdutoCarrinho(req, res){
     const {idProduto} = req.params
     const index = await acharProdutoCarrinho(data.carrinho, idProduto, 0)
     if(index===-1){
-        res.json("O produto informado não está no carrinho.")
+        res.status(404).json({"mensagem":"O produto informado não está no carrinho."})
         return; 
     }
     const produto = produtos[index]
     const quantidade = produto.quantidade * (-1)
     produtos.splice(index, 1)
-    data = await atualizarEstoque(data, idProduto, quantidade)
-    data = await atualizarValoresCarrinho(data, produto, quantidade)
+    data = await atualizarCarrinho(data, produto, quantidade)
     await escreverNoArquivo(data)
-    res.json(data.carrinho)
+    res.status(200).json(data.carrinho)
 }
 
-async function limparCarrinho(req, res){
-    const data = await lerArquivo()
-    data.carrinho = {
-        "produtos": [],
-        "subtotal": 0,
-        "dataDeEntrega": null,
-        "valorDoFrete": 0,
-        "totalAPagar": 0
-    }
+async function rotaLimparCarrinho(req, res){
+    let data = await lerArquivo()
+    data = await limparCarrinho(data)
 
     await escreverNoArquivo(data)
-    res.json("A ação foi realizada com sucesso. O carrinho está vazio")
+    res.status(200).json({"mensagem":"A ação foi realizada com sucesso. O carrinho está vazio."})
 }
 
 async function finalizarCompra(req, res){
-    const data = await lerArquivo()
-    const {type, country, name, documents} = req.body
-    const erros = []
+    let data = await lerArquivo()
+    const {carrinho} = data;
+    
     if(data.carrinho.produtos.length===0){
-        res.json("Não há produtos no carrinho")
+        res.status(404).json({"mensagem":"Não há produtos no carrinho."})
         return;
     }
 
-    //verificar estoque 
-
-    if(!type || !country || !name || !documents){
-        res.json("Está faltando dados do cliente. Precisa conter: type, country, name e documents (com type e number).")
-        return;
-    }
-
-    if(country.length<2){
-        erros.push("Precisa informar a sigla do país.")
-    }
-    if(type !== 'individual'){
-        erros.push("O tipo precisa ser igual a 'individual'.")
-    } 
-    if(!name.includes(" ")){
-        erros.push("Precisa informar o nome e sobrenome.")
-    }
-
-    const validarDocuments = documents.some(documento => {
-        return (
-            documento.hasOwnProperty(type) && documento.hasOwnProperty(number) &&
-            documento.type.toLowerCase() === "cpf" && documento.number.length === 11 && validarCpf(documento.number)
-        )
+    const semEstoque = []
+    await carrinho.produtos.forEach(produto => {
+        verificarEstoque(data.produtos, produto.id, produto.quantidade).then(resposta => {
+            if(!resposta){
+                semEstoque.push({
+                    id: produto.id,
+                    nome: produto.nome
+                })
+            }
+        })
     })
 
-    if(!validarDocuments){
-        erros.push("Precisa conter um cpf com 11 digitos apenas númericos.")
+    if(semEstoque.length){
+        res.status(404).json({
+            "mensagem": "Não há estoque o suficiente dos seguintes produtos: ", 
+            "produtos": semEstoque})
+        return; 
     }
+
+    const erros = await validarUsuario(req.body);
 
     if(erros.length>0){
-        res.json(erros)
+        res.status(400).json({
+            "mensagem": "Os dados do usuário precisam ser preenchidos corretamente.",
+            "erros": erros})
         return;
     }
+
+    await carrinho.produtos.forEach(produto => {
+        atualizarEstoque(data, produto.id, produto.quantidade).then(resposta => data = resposta )
+    })
+    res.status(200).json({
+        "mensagem": "Compra efetuada com sucesso!",
+        carrinho})
+
+    data = await limparCarrinho(data)
+
+    await escreverNoArquivo(data)
 }
 
-module.exports = {listarProdutos, listarCarrinho, adicionarProduto, limparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}
+module.exports = {listarProdutos, listarCarrinho, adicionarProduto, rotaLimparCarrinho, alterarQtdProduto, removerProdutoCarrinho, finalizarCompra}
