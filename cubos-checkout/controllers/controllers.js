@@ -1,5 +1,6 @@
 const { lerArquivo, escreverNoArquivo } = require("../utils/bibliotecaFS");
 const instanciaAxios = require('../services/pagarme')
+const fs = require('fs/promises');
 const {add} = require("date-fns");
 const {
   verificarEstoque,
@@ -8,6 +9,8 @@ const {
   atualizarEstoque,
   limparCarrinho,
   validarUsuario,
+  formatarCarrinho,
+  formatarPedido
 } = require("../utils/utils");
 
 async function listarProdutos(req, res) {
@@ -15,7 +18,7 @@ async function listarProdutos(req, res) {
   const { categoria, precoInicial, precoFinal } = req.query;
 
   let produtosEstoque = produtos.filter((produto) => produto.estoque > 0);
-
+  //tirar esses if, ver se sem eles funciona 
   if (categoria) {
     produtosEstoque = produtosEstoque.filter(
       (produto) => produto.categoria.toLowerCase() === categoria.toLowerCase()
@@ -139,6 +142,7 @@ async function rotaLimparCarrinho(req, res) {
 }
 
 async function finalizarCompra(req, res) {
+  const pedidos = await fs.readFile('./data/pedidos.json')
   let data = await lerArquivo();
   const { carrinho } = data;
 
@@ -204,22 +208,37 @@ async function finalizarCompra(req, res) {
       }
      });
 
+    const carrinhoFormatado = await formatarCarrinho(carrinho); 
+    const pedidoFormatado = await formatarPedido(boleto)
+
+    const jsonPedidos = JSON.parse(pedidos)
+    jsonPedidos.push({
+      carrinho: carrinhoFormatado,
+      boleto: pedidoFormatado
+    })
+
     res.status(200).json({
       mensagem: "Compra efetuada com sucesso!",
-      carrinho,
+      carrinho: carrinhoFormatado,
       boleto: boleto
     });
 
+    fs.writeFile('./data/pedidos.json', JSON.stringify(jsonPedidos))
     data = await limparCarrinho(data);
     await escreverNoArquivo(data);
-  } catch (error){
+  } 
+  catch (error){ //testar erros, apagar o amount do body, colocar a api key errada, etc
+    if(!error.response){
+      res.status(500).json({"error": error})
+      return;
+    }
     const {
-      data: { errors },
+      data,
       status,
     } = error.response
     res
       .status(status)
-      .json({ erro: `${errors[0].parameter_name} - ${errors[0].message}` })
+      .json({ erro: `${data.errors[0].parameter_name} - ${data.errors[0].message}` })
   }
 }
 

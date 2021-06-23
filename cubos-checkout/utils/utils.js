@@ -90,6 +90,16 @@ async function validarUsuario(userInfo) {
   return erros;
 }
 
+async function formatarCarrinho(carrinho){
+  const {produtos, ...outros} = carrinho;
+  return {...outros, produtos}
+}
+
+async function formatarPedido(boleto){
+  const {id, ...outros} = boleto
+  return {id, ...outros}
+}
+
 module.exports = {
   verificarEstoque,
   acharProdutoCarrinho,
@@ -97,4 +107,6 @@ module.exports = {
   atualizarCarrinho,
   limparCarrinho,
   validarUsuario,
+  formatarCarrinho,
+  formatarPedido
 };
