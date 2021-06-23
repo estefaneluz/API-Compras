@@ -22,10 +22,10 @@
 - Atualizar quantidades dos produtos no carrinho
 - Limpar o carrinho
 - Obter os dados do carrinho atual, incluindo:
-- Os produtos que estão no carrinho, com seus dados
-- O subtotal do carrinho (soma total em produtos)
-- O valor do frete
-- O valor total a pagar
+  - Os produtos que estão no carrinho, com seus dados
+  - O subtotal do carrinho (soma total em produtos)
+  - O valor do frete
+  - O valor total a pagar
 - Finalizar a venda (CHECKOUT)
 - Manipular estoque subtraindo ou adicionando quantidades de cada produto
 - Gerar um boleto através da API fornecida pela **Pagar.me**
