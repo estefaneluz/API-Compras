@@ -84,4 +84,4 @@ async function validarUsuario(userInfo){
     return erros
 }
 
-module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarCarrinho, validarCpf, limparCarrinho, validarUsuario}
+module.exports = {verificarEstoque, acharProdutoCarrinho, atualizarEstoque, atualizarCarrinho, limparCarrinho, validarUsuario}
